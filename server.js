@@ -2,19 +2,27 @@ const express = require('express');
 const passport = require('passport');
 const session = require('express-session');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
+const cors = require('cors');
 
 const app = express();
 
 // Middleware
-app.use(session({ secret: 'your-secret-key', resave: false, saveUninitialized: true }));
+app.use(cors({
+    origin: 'https://ytpolls.framer.website' // Allow requests from your Framer site
+}));
+app.use(session({ 
+    secret: 'your-secret-key', 
+    resave: false, 
+    saveUninitialized: true 
+}));
 app.use(passport.initialize());
 app.use(passport.session());
 
-// Google OAuth2 Configuration
+// Passport Configuration
 passport.use(new GoogleStrategy({
-    clientID: process.env.GOOGLE_CLIENT_ID,
-    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    callbackURL: "https://your-app.onrender.com/auth/google/callback"
+    clientID: process.env.GOOGLE_CLIENT_ID, // Use environment variable
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET, // Use environment variable
+    callbackURL: 'https://google-auth-backend.onrender.com/auth/google/callback' // Redirect URI
 }, (accessToken, refreshToken, profile, done) => {
     return done(null, { id: profile.id, accessToken });
 }));
@@ -29,7 +37,8 @@ app.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'em
 app.get('/auth/google/callback', 
     passport.authenticate('google', { failureRedirect: '/' }),
     (req, res) => {
-        res.redirect(`https://your-framer-site.com/dashboard?token=${req.user.accessToken}`);
+        // Redirect to your Framer dashboard after successful login
+        res.redirect(`https://ytpolls.framer.website/dashboard?token=${req.user.accessToken}`);
     });
 
 // Dashboard Route (Simulate Framer Dashboard)
